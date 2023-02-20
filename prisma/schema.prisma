@@ -1,0 +1,162 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     Int                @id @default(autoincrement())
+  email                  String             @unique
+  firstName              String
+  lastName               String
+  fullName               String
+  password               String
+  dob                    DateTime?
+  age                    Int?
+  gender                 String?
+  profilePicture         String?
+  coverPicture           String?
+  bio                    String?
+  location               String?
+  sports                 SportUsers[]       @relation("user")
+  posts                  Post[]
+  conversations          Conversation[]
+  messages               Message[]
+  friendsOf              UsersFriends[]     @relation("friend")
+  friends                UsersFriends[]     @relation("user")
+  friendRequestsSent     FriendRequests[]   @relation("sender")
+  friendRequestsReceived FriendRequests[]   @relation("receiver")
+  communitiesOwned       Community[]        @relation("owner")
+  communities            CommunityMembers[] @relation("user")
+  comments               Comment[]
+  likes                  PostLikes[]        @relation("likes")
+  dislikes               PostDislike[]      @relation("dislikes")
+}
+
+model FriendRequests {
+  id         Int  @id @default(autoincrement())
+  sender     User @relation(fields: [senderId], references: [id], name: "sender")
+  senderId   Int
+  receiver   User @relation(fields: [receiverId], references: [id], name: "receiver")
+  receiverId Int
+}
+
+model UsersFriends {
+  id       Int  @id @default(autoincrement())
+  user     User @relation(fields: [userId], references: [id], name: "user")
+  userId   Int
+  friend   User @relation(fields: [friendId], references: [id], name: "friend")
+  friendId Int
+}
+
+model Conversation {
+  id       Int       @id @default(autoincrement())
+  users    User[]
+  messages Message[]
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  content        String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId Int
+  sender         User         @relation(fields: [senderId], references: [id])
+  senderId       Int
+}
+
+model Sport {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  images      String[]
+  users       SportUsers[] @relation("sport")
+  communities Community[]
+}
+
+model SportUsers {
+  id      Int   @id @default(autoincrement())
+  user    User  @relation(fields: [userId], references: [id], name: "user")
+  userId  Int
+  sport   Sport @relation(fields: [sportId], references: [id], name: "sport")
+  sportId Int
+}
+
+model Community {
+  id          Int                @id @default(autoincrement())
+  name        String
+  description String
+  image       String?
+  sport       Sport?             @relation(fields: [sportId], references: [id])
+  sportId     Int?
+  posts       Post[]             @relation(name: "communityPost")
+  owner       User               @relation(fields: [ownerId], references: [id], name: "owner")
+  ownerId     Int
+  members     CommunityMembers[] @relation("community")
+}
+
+model CommunityMembers {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id], name: "user", onDelete: Cascade)
+  userId      Int
+  community   Community @relation(fields: [communityId], references: [id], name: "community", onDelete: Cascade)
+  communityId Int
+}
+
+model Post {
+  id          Int           @id @default(autoincrement())
+  title       String?
+  content     String?
+  published   Boolean       @default(false)
+  author      User          @relation(fields: [authorId], references: [id])
+  authorId    Int
+  community   Community     @relation(fields: [communityId], references: [id], name: "communityPost", onDelete: Cascade)
+  communityId Int
+  comments    Comment[]
+  images      PostImages[]  @relation("images")
+  likes       PostLikes[]   @relation("likes")
+  dislikes    PostDislike[] @relation("dislikes")
+  createdAt   DateTime      @default(now())
+}
+
+model PostImages {
+  id     Int    @id @default(autoincrement())
+  post   Post   @relation(fields: [postId], references: [id], name: "images", onDelete: Cascade)
+  postId Int
+  image  String
+  path   String
+}
+
+model PostLikes {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id], name: "likes", onDelete: Cascade)
+  userId Int
+  post   Post @relation(fields: [postId], references: [id], name: "likes", onDelete: Cascade)
+  postId Int
+}
+
+model PostDislike {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id], name: "dislikes", onDelete: Cascade)
+  userId Int
+  post   Post @relation(fields: [postId], references: [id], name: "dislikes", onDelete: Cascade)
+  postId Int
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  content   String
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  Int
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+  replies   Comment[] @relation("parent")
+  parent    Comment?  @relation("parent", fields: [parentId], references: [id])
+  parentId  Int?
+  createdAt DateTime  @default(now())
+}
