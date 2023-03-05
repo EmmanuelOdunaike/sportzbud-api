@@ -78,5 +78,12 @@ export const login = async (req, res, next) => {
   const token = jwt.sign({ user }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
+
+  let options = {
+    maxAge: 1000 * 60 * 60 * 24, // would expire after 1 day
+  }
+
+  res.cookie('token',token,options);
+
   return res.status(200).json({ token, user });
 };
