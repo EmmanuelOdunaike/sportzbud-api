@@ -73,16 +73,10 @@ app.use((err, req, res, next) => {
     success: false,
     status: errorStatus,
     message: errorMessage,
-    stack: err.stack,
   });
 });
 
-app.use((req, res, next) => {
-  const err = new Error("Not Found");
 
-  err.status = 404;
-  next(err);
-});
 
 app.listen(process.env.PORT, () => {
   console.log("Connected to backend.");
